@@ -1,0 +1,23 @@
+<div class="home-container">
+  <h1>Hello World</h1>
+  <p>Welcome to the SeamFix Voting System!</p>
+  <button (click)="onLogout()">Logout</button>
+
+  @if (loading) {
+    <div>Loading...</div>
+  }
+
+  @if (!loading && !error) {
+    <ul>
+      @for (poll of polls; track poll.id) {
+<!--        <li (click)="openPoll(poll.id)" class="clickable">-->
+<!--          <div>-->
+<!--            {{ poll.title }}-->
+<!--            <p>{{ poll.description }}</p>-->
+<!--          </div>-->
+<!--        </li>-->
+        <app-poll [poll]="poll"></app-poll>
+      }
+    </ul> 1
+  }
+</div>

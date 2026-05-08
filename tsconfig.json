@@ -16,6 +16,12 @@
     "module": "preserve"
   },
   "angularCompilerOptions": {
+    "_enabledBlockTypes": [
+      "if",
+      "for",
+      "switch",
+      "defer"
+    ],
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
