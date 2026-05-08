@@ -1,0 +1,54 @@
+<div class="signup-container">
+  <h2>Sign Up</h2>
+  <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="firstName">First Name</label>
+      <input id="firstName" type="text" formControlName="firstName">
+      @if (signupForm.controls.firstName.touched && signupForm.controls.firstName.errors?.['required']) {
+        <small class="error-text">First name is required</small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="lastName">Last Name</label>
+      <input id="lastName" type="text" formControlName="lastName">
+      @if (signupForm.controls.lastName.touched && signupForm.controls.lastName.errors?.['required']) {
+        <small class="error-text">Last name is required</small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input id="email" type="email" formControlName="email">
+      @if (signupForm.controls.email.touched) {
+        @if (signupForm.controls.email.errors?.['required']) {
+          <small class="error-text">Email is required</small>
+        } @else if (signupForm.controls.email.errors?.['email']) {
+          <small class="error-text">Invalid email address</small>
+        }
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="state">State</label>
+      <input id="state" type="text" formControlName="state">
+      @if (signupForm.controls.state.touched && signupForm.controls.state.errors?.['required']) {
+        <small class="error-text">State is required</small>
+      }
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input id="password" type="password" formControlName="password">
+      @if (signupForm.controls.password.touched) {
+        @if (signupForm.controls.password.errors?.['required']) {
+          <small class="error-text">Password is required</small>
+        } @else if (signupForm.controls.password.errors?.['minlength']) {
+          <small class="error-text">Password must be at least 8 characters</small>
+        }
+      }
+    </div>
+
+    <button type="submit" [disabled]="signupForm.pending">Sign Up</button>
+  </form>
+</div>
