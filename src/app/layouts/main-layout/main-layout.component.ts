@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from '../../features/navbar/navbar.component';
 import { SidebarComponent } from '../../features/sidebar/sidebar.component';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -22,8 +23,13 @@ import { SidebarComponent } from '../../features/sidebar/sidebar.component';
   `,
   styles: [],
 })
-export class MainLayoutComponent {
+export class MainLayoutComponent implements OnInit {
+  private readonly userService = inject(UserService);
   isSidebarOpen = signal(false);
+
+  ngOnInit(): void {
+    this.userService.getProfile().subscribe();
+  }
 
   toggleSidebar(): void {
     this.isSidebarOpen.update((value) => !value);

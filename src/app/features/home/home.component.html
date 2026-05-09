@@ -1,23 +1,62 @@
-<div class="home-container">
-  <h1>Hello World</h1>
-  <p>Welcome to the SeamFix Voting System!</p>
-  <button (click)="onLogout()">Logout</button>
-
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
   @if (loading) {
-    <div>Loading...</div>
-  }
+    <div class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    </div>
+  } @else if (error) {
+    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl relative mb-6" role="alert">
+      <span class="block sm:inline">{{ error }}</span>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column: Active Polls -->
+      <div class="lg:col-span-2">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-2xl font-extrabold text-gray-900">Active Polls</h2>
+          <a class="text-sm font-semibold text-blue-600 hover:text-blue-700" href="#">View all →</a>
+        </div>
 
-  @if (!loading && !error) {
-    <ul>
-      @for (poll of polls; track poll.id) {
-<!--        <li (click)="openPoll(poll.id)" class="clickable">-->
-<!--          <div>-->
-<!--            {{ poll.title }}-->
-<!--            <p>{{ poll.description }}</p>-->
-<!--          </div>-->
-<!--        </li>-->
-        <app-poll [poll]="poll"></app-poll>
-      }
-    </ul> 1
+        <div class="space-y-6">
+          @for (poll of activePolls; track poll.id) {
+            <app-poll [poll]="poll" mode="standard"></app-poll>
+          }
+        </div>
+      </div>
+
+      <!-- Right Column: Featured & Trending -->
+      <div class="space-y-12">
+        <!-- Featured Poll -->
+        <section>
+          @if (featuredPoll) {
+            <app-poll [poll]="featuredPoll" mode="featured"></app-poll>
+          }
+        </section>
+
+        <!-- Trending Now -->
+        <section>
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-extrabold text-gray-900">Trending Now</h2>
+            <a class="text-sm font-semibold text-blue-600 hover:text-blue-700" href="#">See all →</a>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            @for (poll of trendingPolls; track poll.id; let i = $index) {
+              <div
+                (click)="openPoll(poll.id)"
+                class="flex items-center p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 cursor-pointer">
+                <span class="text-2xl font-bold text-gray-200 mr-4 w-6">{{ i + 1 | number:'2.0-0' }}</span>
+                <div class="flex-1 min-w-0">
+                  <h4 class="text-sm font-bold text-gray-900 truncate">{{ poll.title }}</h4>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs text-gray-500">{{ poll.totalVoteCount | number }} votes</span>
+                    <span class="text-[10px] font-bold text-orange-600">{{ poll.trendingCount }}</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      </div>
+    </div>
   }
 </div>

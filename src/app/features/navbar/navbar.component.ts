@@ -1,5 +1,17 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  computed,
+  EventEmitter,
+  inject,
+  OnDestroy,
+  OnInit,
+  Output,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-navbar',
@@ -10,7 +22,7 @@ import { CommonModule } from '@angular/common';
       class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 fixed top-0 right-0 left-0 lg:left-64 z-40 transition-all duration-300"
     >
       <div class="flex items-center gap-4">
-        <!-- Hamburger Menu Button -->
+        <!-- Hamburger Menu -->
         <button
           (click)="toggleSidebar.emit()"
           class="lg:hidden p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
@@ -26,7 +38,7 @@ import { CommonModule } from '@angular/common';
         </button>
 
         <span class="text-xs sm:text-sm text-gray-600 hidden sm:block">
-          Welcome back, <span class="font-semibold text-gray-900">Jane!</span>
+          Welcome back, <span class="font-semibold text-gray-900">{{ welcomeName() }}!</span>
           <span class="mx-2 text-gray-300">|</span>
           <span class="text-gray-500 font-medium">{{
             currentTime | date: 'MMM d, y, hh:mm a'
@@ -54,7 +66,7 @@ import { CommonModule } from '@angular/common';
           <input
             type="text"
             placeholder="Search"
-            class="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all"
+            class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
           />
         </div>
       </div>
@@ -77,29 +89,97 @@ import { CommonModule } from '@angular/common';
           >
         </button>
 
-        <div class="flex items-center gap-2 sm:gap-3 sm:pl-6 sm:border-l border-gray-200">
-          <div class="text-right hidden md:block">
-            <p class="text-sm font-bold text-gray-900 leading-none">Jane Cooper</p>
-            <p class="text-xs text-gray-500 mt-1">Admin</p>
-          </div>
-          <div
-            class="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white cursor-pointer"
+        <div class="relative">
+          <button
+            (click)="toggleProfileMenu($event)"
+            class="flex items-center gap-2 sm:gap-3 sm:pl-6 sm:border-l border-gray-200 group focus:outline-none"
           >
-            <img
-              src="https://ui-avatars.com/api/?name=Jane+Cooper&background=random"
-              alt="User avatar"
-            />
+            <div class="text-right hidden md:block">
+              <p
+                class="text-sm font-bold text-gray-900 leading-none group-hover:text-blue-600 transition-colors"
+              >
+                {{ userService.currentUser()?.email || 'User' }}
+              </p>
+              <p class="text-xs text-gray-500 mt-1">{{ displayRole() }}</p>
+            </div>
+            <div
+              class="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-gray-200 overflow-hidden ring-2 ring-white cursor-pointer group-hover:ring-blue-100 transition-all"
+            >
+              <img
+                src="https://ui-avatars.com/api/?name={{ welcomeName() }}&background=random"
+                alt="User avatar"
+              />
+            </div>
+          </button>
+
+          <!-- Profile Dropdown Menu -->
+          <div
+            *ngIf="isProfileMenuOpen()"
+            class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl shadow-gray-200 border border-gray-100 py-2 z-50 transform origin-top-right transition-all"
+          >
+            <a
+              href="#"
+              class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                />
+              </svg>
+              My Profile
+            </a>
+            <button
+              (click)="logout()"
+              class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-50"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                />
+              </svg>
+              Sign out
+            </button>
           </div>
         </div>
       </div>
     </header>
+
+    <!-- Invisible Backdrop to close menu -->
+    <div
+      *ngIf="isProfileMenuOpen()"
+      (click)="isProfileMenuOpen.set(false)"
+      class="fixed inset-0 z-30"
+    ></div>
   `,
   styles: [],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   @Output() toggleSidebar = new EventEmitter<void>();
+
+  isProfileMenuOpen = signal(false);
+  protected readonly userService = inject(UserService);
+  welcomeName = computed(() => {
+    const email = this.userService.currentUser()?.email;
+    if (!email) return 'User';
+    const firstPart = email.split('@')[0].split('.')[0].split('_')[0];
+    return firstPart.charAt(0).toUpperCase() + firstPart.slice(1);
+  });
+  displayRole = computed(() => {
+    const roles = this.userService.currentUser()?.roles || [];
+    if (roles.includes('admin')) return 'Admin';
+    if (roles.includes('candidate')) return 'Candidate';
+    return 'User';
+  });
   currentTime: Date = new Date();
   private timer: any;
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   ngOnInit(): void {
     this.timer = setInterval(() => {
@@ -111,5 +191,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (this.timer) {
       clearInterval(this.timer);
     }
+  }
+
+  toggleProfileMenu(event: Event): void {
+    event.stopPropagation();
+    this.isProfileMenuOpen.update((v) => !v);
+  }
+
+  logout(): void {
+    this.isProfileMenuOpen.set(false);
+    this.authService.logout('');
+    this.userService.clearUser();
+    this.router.navigate(['/login']);
   }
 }

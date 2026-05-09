@@ -1,12 +1,22 @@
-.home-container {
-  text-align: center;
-  margin-top: 50px;
+/* Modern, simplistic layout styles */
+:host {
+  display: block;
 }
-button {
-  padding: 10px 20px;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+
+.max-w-7xl {
+  max-width: 80rem;
+}
+
+/* Custom scrollbar for trending list if needed */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #E5E7EB;
+  border-radius: 10px;
 }

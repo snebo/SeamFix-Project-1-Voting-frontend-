@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+canvas {
+  max-width: 100%;
+}
+
+/* Custom rounded corners for charts if needed via container */
+.chart-container {
+  position: relative;
+  margin: auto;
+}
