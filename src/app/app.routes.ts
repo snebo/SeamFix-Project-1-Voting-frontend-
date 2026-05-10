@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { adminGuard } from './core/guards/admin.guard';
 import { MainLayoutComponent } from './layouts/main-layout/main-layout.component';
 import { NotFoundComponent } from './features/not-found/not-found.component';
 
@@ -25,6 +26,17 @@ export const routes: Routes = [
       {
         path: 'home',
         loadComponent: () => import('./features/home/home.component').then((m) => m.HomeComponent),
+      },
+      {
+        path: 'polls',
+        loadComponent: () =>
+          import('./features/all-polls/all-polls.component').then((m) => m.AllPollsComponent),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/users/users.component').then((m) => m.UsersComponent),
+        canActivate: [adminGuard],
       },
       {
         path: 'poll/:id',

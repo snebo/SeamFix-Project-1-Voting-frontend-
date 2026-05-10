@@ -27,6 +27,10 @@ export class UserService {
       .pipe(tap((user) => this.currentUser.set(user)));
   }
 
+  getAllUsers(): Observable<User[]> {
+    return this.httpClient.get<User[]>(`${this.apiUrl}/users`);
+  }
+
   clearUser(): void {
     this.currentUser.set(null);
   }

@@ -13,22 +13,28 @@
       <div class="lg:col-span-2">
         <div class="flex items-center justify-between mb-6">
           <h2 class="text-2xl font-extrabold text-gray-900">Active Polls</h2>
-          <a class="text-sm font-semibold text-blue-600 hover:text-blue-700" href="#">View all →</a>
+          <a class="text-sm font-semibold text-blue-600 hover:text-blue-700" routerLink="/polls">View all →</a>
         </div>
 
-        <div class="space-y-6">
-          @for (poll of activePolls; track poll.id) {
-            <app-poll [poll]="poll" mode="standard"></app-poll>
-          }
-        </div>
+        @if (filteredActivePolls().length === 0) {
+          <div class="text-center py-12 bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <p class="text-gray-500 font-medium">No active polls match your search.</p>
+          </div>
+        } @else {
+          <div class="space-y-6">
+            @for (poll of filteredActivePolls(); track poll.id) {
+              <app-poll [poll]="poll" mode="standard"></app-poll>
+            }
+          </div>
+        }
       </div>
 
       <!-- Right Column: Featured & Trending -->
       <div class="space-y-12">
         <!-- Featured Poll -->
         <section>
-          @if (featuredPoll) {
-            <app-poll [poll]="featuredPoll" mode="featured"></app-poll>
+          @if (featuredPoll()) {
+            <app-poll [poll]="featuredPoll()!" mode="featured"></app-poll>
           }
         </section>
 
@@ -40,7 +46,7 @@
           </div>
 
           <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            @for (poll of trendingPolls; track poll.id; let i = $index) {
+            @for (poll of staticTrendingPolls(); track poll.id; let i = $index) {
               <div
                 (click)="openPoll(poll.id)"
                 class="flex items-center p-4 hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0 cursor-pointer">

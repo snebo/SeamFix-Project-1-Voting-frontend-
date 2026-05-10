@@ -12,6 +12,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../services/user.service';
+import { SearchService } from '../../services/search.service';
+import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-navbar',
@@ -65,7 +67,8 @@ import { UserService } from '../../services/user.service';
           </span>
           <input
             type="text"
-            placeholder="Search"
+            placeholder="Search polls by title..."
+            (input)="onSearch($event)"
             class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-xl shadow-sm placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all"
           />
         </div>
@@ -115,7 +118,7 @@ import { UserService } from '../../services/user.service';
           <!-- Profile Dropdown Menu -->
           <div
             *ngIf="isProfileMenuOpen()"
-            class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl shadow-gray-200 border border-gray-100 py-2 z-50 transform origin-top-right transition-all"
+            class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-md shadow-gray-300 border border-gray-100 py-2 z-50 transform origin-top-right transition-all"
           >
             <a
               href="#"
@@ -164,6 +167,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   isProfileMenuOpen = signal(false);
   protected readonly userService = inject(UserService);
+  private readonly searchService = inject(SearchService);
+
+  private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
+
   welcomeName = computed(() => {
     const email = this.userService.currentUser()?.email;
     if (!email) return 'User';
@@ -185,12 +193,25 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.timer = setInterval(() => {
       this.currentTime = new Date();
     }, 1000);
+
+    this.searchSubject
+      .pipe(debounceTime(300), distinctUntilChanged(), takeUntil(this.destroy$))
+      .subscribe((term) => {
+        this.searchService.setSearchTerm(term);
+      });
   }
 
   ngOnDestroy(): void {
     if (this.timer) {
       clearInterval(this.timer);
     }
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  onSearch(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.searchSubject.next(input.value);
   }
 
   toggleProfileMenu(event: Event): void {
@@ -202,6 +223,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.isProfileMenuOpen.set(false);
     this.authService.logout('');
     this.userService.clearUser();
+    this.searchService.clearSearch();
     this.router.navigate(['/login']);
   }
 }

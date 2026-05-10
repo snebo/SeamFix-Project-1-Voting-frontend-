@@ -2,6 +2,7 @@ import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../core/services/auth.service';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -81,7 +82,9 @@ import { AuthService } from '../../core/services/auth.service';
           Dashboard
         </a>
         <a
-          href="#"
+          *ngIf="userService.currentUser()?.roles?.includes('admin')"
+          routerLink="/users"
+          routerLinkActive="bg-[#333537] text-white"
           (click)="onLinkClick()"
           class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#333537] hover:text-white transition-colors"
         >
@@ -102,7 +105,8 @@ import { AuthService } from '../../core/services/auth.service';
           Users
         </a>
         <a
-          href="#"
+          routerLink="/polls"
+          routerLinkActive="bg-[#333537] text-white"
           (click)="onLinkClick()"
           class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-[#333537] hover:text-white transition-colors"
         >
@@ -219,6 +223,7 @@ export class SidebarComponent {
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  protected readonly userService = inject(UserService);
 
   closeSidebar(): void {
     this.toggleSidebar.emit();
@@ -232,6 +237,7 @@ export class SidebarComponent {
 
   logout(): void {
     this.authService.logout({});
+    this.userService.clearUser();
     this.router.navigate(['/login']);
     if (window.innerWidth < 1024) {
       this.toggleSidebar.emit();
