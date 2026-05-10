@@ -1,10 +1,12 @@
-import { ChangeDetectorRef, Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PollResponse, PollService } from '../../services/poll.service';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { ToastService } from '../../core/services/toast.service';
+import { calculateRemainingTime } from '../poll/poll.component';
+import { switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-poll-details',
@@ -14,33 +16,49 @@ import { ToastService } from '../../core/services/toast.service';
   styleUrl: './poll-details.css',
 })
 export class PollDetails implements OnInit {
-  isVoting = signal(false);
-  // Pie Chart Configuration
+  pollId!: string;
+  poll = signal<PollResponse | null>(null);
+  loading = signal(true);
+  error = signal('');
+  // Computed Chart Data for Pie Chart
+  pieChartData = computed<ChartData<'pie'>>(() => {
+    const p = this.poll();
+    if (!p) return { labels: [], datasets: [] };
+
+    return {
+      labels: p.options.map((o) => o.label),
+      datasets: [
+        {
+          data: p.options.map((o) => o.percentage || 0),
+          backgroundColor: ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1'],
+        },
+      ],
+    };
+  });
+  // Computed Chart Data for Bar Chart
+  barChartData = computed<ChartData<'bar'>>(() => {
+    const p = this.poll();
+    if (!p) return { labels: [], datasets: [] };
+
+    return {
+      labels: p.options.map((o) => o.label),
+      datasets: [
+        {
+          data: p.options.map((o) => o.voteCount),
+          label: 'Votes',
+          backgroundColor: '#3B82F6',
+          borderRadius: 6,
+        },
+      ],
+    };
+  });
   public pieChartOptions: ChartConfiguration['options'] = {
     responsive: true,
     plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-      },
+      legend: { display: true, position: 'bottom' },
     },
   };
-  public pieChartData: ChartData<'pie', number[], string | string[]> = {
-    labels: [],
-    datasets: [
-      {
-        data: [],
-        backgroundColor: ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1'],
-      },
-    ],
-  };
-  public pieChartType: ChartType = 'pie';
-
-  pollId!: string;
-  poll!: PollResponse;
-  loading = true;
-  error = '';
-  // Bar Chart Configuration
+  isVoting = signal(false);
   public barChartOptions: ChartConfiguration['options'] = {
     responsive: true,
     indexAxis: 'y',
@@ -52,91 +70,78 @@ export class PollDetails implements OnInit {
       legend: { display: false },
     },
   };
-  public barChartData: ChartData<'bar'> = {
-    labels: [],
-    datasets: [
-      {
-        data: [],
-        label: 'Votes',
-        backgroundColor: '#3B82F6',
-        borderRadius: 6,
-      },
-    ],
-  };
-  public barChartType: ChartType = 'bar';
   private readonly route = inject(ActivatedRoute);
   private readonly pollService = inject(PollService);
+  public pieChartType: ChartType = 'pie';
   private readonly toastService = inject(ToastService);
-  private readonly cdr = inject(ChangeDetectorRef);
+  public barChartType: ChartType = 'bar';
 
   ngOnInit() {
     this.pollId = this.route.snapshot.paramMap.get('id')!;
-    this.fetchPollDetails();
+    this.fetchPollDetails(true);
   }
 
-  fetchPollDetails() {
-    this.loading = true;
-    this.pollService.getPoll(this.pollId).subscribe({
-      next: (poll) => {
-        this.poll = poll;
-        console.log('Poll: ', JSON.stringify(poll));
+  fetchPollDetails(isInitial: boolean = false) {
+    if (isInitial) this.loading.set(true);
 
-        console.log('searching for polls: ', this.poll.id);
-        this.pollService.getUserVote(this.poll.id).subscribe((optionId) => {
-          console.log('serching votes', optionId);
-          this.poll.userVotedOptionId = optionId;
-          this.cdr.detectChanges();
-        });
+    this.pollService
+      .getPoll(this.pollId)
+      .pipe(
+        switchMap((poll: PollResponse) => {
+          // First set the basic poll data
+          const enrichedPoll = {
+            ...poll,
+            options: poll.options.map((o) => ({
+              ...o,
+              percentage:
+                o.percentage ||
+                (poll.totalVoteCount > 0
+                  ? Math.round((o.voteCount / poll.totalVoteCount) * 100)
+                  : 0),
+            })),
+          };
+          this.poll.set(enrichedPoll);
 
-        this.updateCharts();
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: (err) => {
-        this.error = 'Failed to load poll details. Please try again later.';
-        this.loading = false;
-        this.cdr.detectChanges();
-        console.error(err);
-      },
-    });
-  }
-
-  updateCharts() {
-    const labels = this.poll.options.map((o) => o.label);
-    const percentages = this.poll.options.map((o) => o.percentage || 0);
-    const votes = this.poll.options.map((o) => o.voteCount);
-
-    this.pieChartData = {
-      labels: labels,
-      datasets: [
-        {
-          data: percentages,
-          backgroundColor: ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#6366F1'],
+          // Then fetch the user's vote
+          return this.pollService.getUserVote(poll.id).pipe(
+            tap((optionId) => {
+              if (this.poll()) {
+                this.poll.update((current) =>
+                  current ? { ...current, userVotedOptionId: optionId } : null,
+                );
+              }
+            }),
+          );
+        }),
+      )
+      .subscribe({
+        next: () => {
+          this.loading.set(false);
         },
-      ],
-    };
-
-    this.barChartData = {
-      labels: labels,
-      datasets: [
-        {
-          data: votes,
-          label: 'Votes',
-          backgroundColor: '#3B82F6',
-          borderRadius: 6,
+        error: (err) => {
+          this.error.set('Failed to load poll details. Please try again later.');
+          this.loading.set(false);
+          console.error(err);
         },
-      ],
-    };
+      });
   }
 
   vote(optionId: string) {
+    const currentPoll = this.poll();
+    if (!currentPoll) return;
+
+    if (currentPoll.status === 'CLOSED') {
+      this.toastService.error('This poll is closed');
+      return;
+    }
+
     if (this.isVoting()) return;
 
     this.isVoting.set(true);
     this.pollService.vote(this.pollId, optionId).subscribe({
       next: () => {
         this.toastService.success('Your vote has been recorded!');
-        this.fetchPollDetails();
+        this.fetchPollDetails(false); // Silent refresh
         this.isVoting.set(false);
       },
       error: (err) => {
@@ -147,7 +152,8 @@ export class PollDetails implements OnInit {
   }
 
   getStatusClass(): string {
-    switch (this.poll.status) {
+    const status = this.poll()?.status;
+    switch (status) {
       case 'LIVE':
         return 'bg-pink-100 text-pink-700';
       case 'CLOSED':
@@ -155,5 +161,9 @@ export class PollDetails implements OnInit {
       default:
         return 'bg-blue-100 text-blue-700';
     }
+  }
+
+  getRemainingTime(poll_exp: Date | string): string {
+    return calculateRemainingTime(poll_exp);
   }
 }

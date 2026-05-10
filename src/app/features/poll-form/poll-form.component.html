@@ -1,0 +1,135 @@
+<div class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+  <!-- Back Button -->
+  <div class="mb-8">
+    <a
+      class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-blue-600 transition-colors group"
+      routerLink="/polls">
+      <div
+        class="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center group-hover:border-blue-500 group-hover:bg-blue-50 transition-all">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+        </svg>
+      </div>
+      Back to Polls
+    </a>
+  </div>
+
+  <div class="mb-10">
+    <h1 class="text-4xl font-black text-gray-900 leading-tight">
+      {{ isEditMode() ? 'Update' : 'Create New' }} Poll
+    </h1>
+    <p class="mt-4 text-lg text-gray-600 max-w-2xl">
+      {{ isEditMode() ? 'Modify the existing poll details and options below.' : 'Fill in the information below to launch a new community poll.' }}
+    </p>
+  </div>
+
+  <div class="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/50">
+    <form (ngSubmit)="onSubmit()" [formGroup]="pollForm" class="space-y-8">
+      <!-- Basic Details -->
+      <div class="grid grid-cols-1 gap-8">
+        <div>
+          <label class="block text-sm font-black text-gray-900 uppercase tracking-widest mb-3" for="title">Poll
+            Title</label>
+          <input
+            class="w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-gray-800"
+            formControlName="title" id="title" placeholder="e.g., Best State in Nigeria"
+            type="text">
+          @if (pollForm.controls.title.touched && pollForm.controls.title.errors?.['required']) {
+            <p class="mt-2 text-xs font-bold text-red-600 uppercase">Title is required</p>
+          }
+        </div>
+
+        <div>
+          <label class="block text-sm font-black text-gray-900 uppercase tracking-widest mb-3" for="description">Description</label>
+          <textarea
+            class="w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-medium text-gray-700"
+            formControlName="description" id="description"
+            placeholder="Explain what this poll is about..."
+            rows="3"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <label class="block text-sm font-black text-gray-900 uppercase tracking-widest mb-3" for="state">Target
+              State</label>
+            <select
+              class="w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-gray-800 appearance-none"
+              formControlName="state"
+              id="state">
+              <option disabled value="">Select a state</option>
+              @for (state of nigerianStates; track state) {
+                <option [value]="state">{{ state }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-black text-gray-900 uppercase tracking-widest mb-3" for="expiresAt">Expiration
+              Date</label>
+            <input
+              class="w-full px-5 py-4 rounded-2xl border border-gray-200 bg-gray-50/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-gray-800"
+              formControlName="expiresAt" id="expiresAt"
+              type="date">
+          </div>
+        </div>
+      </div>
+
+      <!-- Options Section -->
+      <div class="pt-8 border-t border-gray-50">
+        <div class="flex items-center justify-between mb-6">
+          <label class="block text-sm font-black text-gray-900 uppercase tracking-widest">Poll Options</label>
+          <button (click)="addOption()"
+                  class="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-2"
+                  type="button">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            </svg>
+            Add Option
+          </button>
+        </div>
+
+        <div class="space-y-4" formArrayName="options">
+          @for (option of options.controls; track $index; let i = $index) {
+            <div [formGroupName]="i" class="flex gap-4 items-start">
+              <div class="flex-1">
+                <input [placeholder]="'Option ' + (i + 1)"
+                       class="w-full px-5 py-4 rounded-2xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-bold text-gray-800 shadow-sm"
+                       formControlName="label"
+                       type="text">
+              </div>
+              <button (click)="removeOption(i)" [title]="'Remove option ' + (i + 1)"
+                      class="mt-4 p-2 text-gray-300 hover:text-red-600 transition-colors"
+                      type="button">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    stroke-linecap="round" stroke-linejoin="round"
+                    stroke-width="2" />
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="pt-10 flex gap-4">
+        <button [disabled]="pollForm.invalid || loading()"
+                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-200 transition-all disabled:bg-gray-200 disabled:shadow-none transform active:scale-[0.98]"
+                type="submit">
+          @if (loading()) {
+            <div class="flex justify-center">
+              <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+            </div>
+          } @else {
+            {{ isEditMode() ? 'Save Changes' : 'Launch Poll' }}
+          }
+        </button>
+        <a
+          class="px-10 py-4 bg-gray-50 hover:bg-gray-100 text-gray-900 font-bold rounded-2xl transition-all border border-gray-100"
+          routerLink="/polls">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>

@@ -33,10 +33,32 @@ export const routes: Routes = [
           import('./features/all-polls/all-polls.component').then((m) => m.AllPollsComponent),
       },
       {
+        path: 'polls/create',
+        loadComponent: () =>
+          import('./features/poll-form/poll-form.component').then((m) => m.PollFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
+        path: 'polls/:id/edit',
+        loadComponent: () =>
+          import('./features/poll-form/poll-form.component').then((m) => m.PollFormComponent),
+        canActivate: [adminGuard],
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/users/users.component').then((m) => m.UsersComponent),
         canActivate: [adminGuard],
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.MyProfileComponent),
+      },
+      {
+        path: 'analytics',
+        loadComponent: () =>
+          import('./features/analytics/analytics.component').then((m) => m.AnalyticsComponent),
       },
       {
         path: 'poll/:id',

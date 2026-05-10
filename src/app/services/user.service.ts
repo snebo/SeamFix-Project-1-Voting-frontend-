@@ -11,6 +11,22 @@ export interface User {
   firstName?: string;
   lastName?: string;
 }
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  state: string;
+  roles: string[];
+  created_at: string;
+  votes: Array<{
+    id: string;
+    pollId: string;
+    pollOptionId: string;
+    created_at: string;
+  }>;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -25,6 +41,10 @@ export class UserService {
     return this.httpClient
       .get<User>(`${this.apiUrl}/auth/profile`)
       .pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  getUserProfile(): Observable<UserProfile> {
+    return this.httpClient.get<UserProfile>(`${this.apiUrl}/users/user-profile`);
   }
 
   getAllUsers(): Observable<User[]> {

@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../services/user.service';
 import { SearchService } from '../../services/search.service';
@@ -18,7 +18,7 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <header
       class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 lg:px-8 fixed top-0 right-0 left-0 lg:left-64 z-40 transition-all duration-300"
@@ -118,10 +118,11 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
           <!-- Profile Dropdown Menu -->
           <div
             *ngIf="isProfileMenuOpen()"
-            class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-md shadow-gray-300 border border-gray-100 py-2 z-50 transform origin-top-right transition-all"
+            class="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl shadow-gray-200 border border-gray-100 py-2 z-50 transform origin-top-right transition-all"
           >
             <a
-              href="#"
+              routerLink="/profile"
+              (click)="isProfileMenuOpen.set(false)"
               class="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors"
             >
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -134,6 +135,7 @@ import { debounceTime, distinctUntilChanged, Subject, takeUntil } from 'rxjs';
               </svg>
               My Profile
             </a>
+
             <button
               (click)="logout()"
               class="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-50"

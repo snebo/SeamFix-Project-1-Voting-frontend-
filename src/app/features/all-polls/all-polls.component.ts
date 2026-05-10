@@ -5,6 +5,7 @@ import { PollResponse, PollService } from '../../services/poll.service';
 import { UserService } from '../../services/user.service';
 import { SearchService } from '../../services/search.service';
 import { PollComponent } from '../poll/poll.component';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-all-polls',
@@ -19,18 +20,19 @@ export class AllPollsComponent implements OnInit {
   error = signal('');
   pageSize = 10;
   totalPolls = signal(0);
+
   private readonly pollService = inject(PollService);
-  private readonly userService = inject(UserService);
+  protected readonly userService = inject(UserService);
   private readonly searchService = inject(SearchService);
+  private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toastService = inject(ToastService);
+
   filteredPolls = computed(() => {
     const term = this.searchService.searchTerm().toLowerCase();
     if (!term) return this.polls();
     return this.polls().filter((p) => p.title.toLowerCase().includes(term));
   });
-
-  // Pagination (Mocked as the backend might not support it yet, but structured for it)
-  private readonly router = inject(Router);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     this.loadPolls();
@@ -59,5 +61,35 @@ export class AllPollsComponent implements OnInit {
 
   openPoll(id: string): void {
     this.router.navigate(['/poll/' + id]);
+  }
+
+  deletePoll(id: string, event: Event): void {
+    event.stopPropagation();
+    if (confirm('Are you sure you want to delete this poll? This action cannot be undone.')) {
+      this.pollService.deletePoll(id).subscribe({
+        next: () => {
+          this.toastService.success('Poll deleted successfully');
+          this.loadPolls();
+        },
+        error: () => this.toastService.error('Failed to delete poll'),
+      });
+    }
+  }
+
+  toggleStatus(poll: PollResponse, event: Event): void {
+    event.stopPropagation();
+    const newActiveState = poll.status === 'CLOSED';
+    this.pollService.togglePollStatus(poll.id, newActiveState).subscribe({
+      next: () => {
+        this.toastService.success(`Poll status updated`);
+        this.loadPolls();
+      },
+      error: () => this.toastService.error('Failed to update status'),
+    });
+  }
+
+  editPoll(id: string, event: Event): void {
+    event.stopPropagation();
+    this.router.navigate(['/polls', id, 'edit']);
   }
 }

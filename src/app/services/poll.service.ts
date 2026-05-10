@@ -19,10 +19,19 @@ export interface PollResponse {
   options: PollOption[];
   totalVoteCount: number;
   category?: string;
+  isActive?: boolean;
   status?: 'LIVE' | 'TRENDING' | 'NEW' | 'CLOSED';
   trendingCount?: string;
   isFeatured?: boolean;
   userVotedOptionId?: string | null;
+}
+
+export interface UserVote {
+  id: string;
+  created_at: string;
+  selectedOptionId: string;
+  poll: PollResponse;
+  pollOption?: { id: string };
 }
 
 @Injectable({
@@ -55,11 +64,17 @@ export class PollService {
   getUserVote(pollId: string): Observable<string | null> {
     return this.httpClient.get<any[]>(`${this.apiUrl}/vote/me`).pipe(
       map((votes) => {
-        console.log(votes);
         const match = votes.find((vote) => vote.poll.id === pollId);
-        return match ? match.pollOption.id : null;
+        return match ? match.selectedOptionId || match.pollOption?.id : null;
       }),
     );
+  }
+
+  getUserVotes(): Observable<UserVote[]> {
+    if (this.useMockData) {
+      return of(this.getMockUserVotes());
+    }
+    return this.httpClient.get<UserVote[]>(`${this.apiUrl}/vote/me`);
   }
 
   vote(pollId: string, optionId: string): Observable<any> {
@@ -71,6 +86,39 @@ export class PollService {
       pollId: pollId,
       pollOptionId: optionId,
     });
+  }
+
+  createPoll(data: any): Observable<PollResponse> {
+    return this.httpClient.post<PollResponse>(`${this.apiUrl}/poll`, data);
+  }
+
+  updatePoll(id: string, data: any): Observable<PollResponse> {
+    return this.httpClient.put<PollResponse>(`${this.apiUrl}/poll/${id}`, data);
+  }
+
+  deletePoll(id: string): Observable<void> {
+    return this.httpClient.delete<void>(`${this.apiUrl}/poll/${id}`);
+  }
+
+  togglePollStatus(id: string, isActive: boolean): Observable<PollResponse> {
+    return this.httpClient.patch<PollResponse>(`${this.apiUrl}/poll/${id}`, { isActive });
+  }
+
+  private getMockUserVotes(): UserVote[] {
+    return [
+      {
+        id: 'v1',
+        created_at: new Date().toISOString(),
+        selectedOptionId: '1a',
+        poll: this.getMockPolls()[0],
+      },
+      {
+        id: 'v2',
+        created_at: new Date().toISOString(),
+        selectedOptionId: '2b',
+        poll: this.getMockPolls()[1],
+      },
+    ];
   }
 
   private getMockPolls(): PollResponse[] {

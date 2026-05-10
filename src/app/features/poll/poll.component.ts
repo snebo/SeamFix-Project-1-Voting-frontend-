@@ -78,20 +78,24 @@ export class PollComponent implements OnInit {
   }
 
   getTimeLeft(expiresAt: Date | string): string {
-    const now = new Date();
-    const expiry = new Date(expiresAt);
-    const diffMs = expiry.getTime() - now.getTime();
-
-    if (diffMs <= 0) return 'Expired';
-
-    const diffSecs = Math.floor(diffMs / 1000);
-    const diffMins = Math.floor(diffSecs / 60);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffDays > 0) return `${diffDays}d left`;
-    if (diffHours > 0) return `${diffHours}h left`;
-    if (diffMins > 0) return `${diffMins}m left`;
-    return `${diffSecs}s left`;
+    return calculateRemainingTime(expiresAt);
   }
+}
+
+export function calculateRemainingTime(expiryDate: Date | string): string {
+  const now = new Date();
+  const expiry = new Date(expiryDate);
+  const diffMs = expiry.getTime() - now.getTime();
+
+  if (diffMs <= 0) return 'Expired';
+
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffDays > 0) return `${diffDays}d left`;
+  if (diffHours > 0) return `${diffHours}h left`;
+  if (diffMins > 0) return `${diffMins}m left`;
+  return `${diffSecs}s left`;
 }
